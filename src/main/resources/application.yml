@@ -1,0 +1,116 @@
+# ============================================================
+#  ai-learn：Spring Boot + Spring AI 应用配置
+#  说明：本文件是核心配置文件，控制整个项目的行为
+# ============================================================
+
+# ========== 服务器配置 ==========
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+
+# ========== Spring AI 配置 ==========
+spring:
+  application:
+    name: ai-learn
+
+  # ---------- AI 核心配置 ----------
+  ai:
+    # ========== OpenAI 集成配置 ==========
+    # 说明：如果使用国内的模型（如阿里、智谱等），可以替换为对应的 Starter
+    openai:
+      # ⚠️ 请将 YOUR_API_KEY_HERE 替换为你的真实 API Key
+      # 获取地址：https://platform.openai.com/api-keys
+      api-key: ${OPENAI_API_KEY:your-api-key-here}
+
+      # 基础 URL：默认是 OpenAI 官方地址
+      # 如果使用代理或兼容接口，可以修改这里：
+      # base-url: https://api.openai.com
+
+      # ========== 对话模型配置 ==========
+      chat:
+        options:
+          # 使用的模型名称
+          # gpt-4o：目前最强、最贵的模型
+          # gpt-4o-mini：性价比高，80%-90% 的场景够用
+          # gpt-3.5-turbo：已退役，但兼容接口可能还支持
+          model: gpt-4o-mini
+
+          # 温度参数（Temperature）：控制输出的随机性
+          # 范围：0.0 ~ 2.0
+          #   0.0 → 确定性最强，每次输出几乎相同（适合代码生成、数学计算）
+          #   0.7 → 平衡值（默认），适合一般对话
+          #   1.0+ → 创造性最强，适合写作、头脑风暴
+          temperature: 0.7
+
+          # Top-P（核采样）：控制候选词的范围
+          #   1.0 → 不限制（默认），考虑所有可能的词
+          #   0.1 → 只考虑概率最高的前 10% 的词
+          # 通常 temperature 和 topP 选一个调整即可
+          top-p: 1.0
+
+          # 最大输出 Token 数：限制模型一次最多返回多少 Token
+          #   null → 不限制（受模型上下文窗口限制）
+          #   4096 → 适合长回答场景
+          max-tokens: 2048
+
+      # ========== Embedding 模型配置（向量嵌入用）==========
+      embedding:
+        options:
+          # text-embedding-ada-002   → OpenAI 经典模型
+          # text-embedding-3-small   → 性价比最高（推荐）
+          # text-embedding-3-large   → 精度最高，价格更贵
+          model: text-embedding-3-small
+
+    # ========== 向量存储配置 ==========
+    # 学习环境使用 SimpleVectorStore（基于内存），无需外部数据库
+    # 生产环境建议切换到 PGVector 或 Milvus
+    vectorstore:
+      simple:
+        # 是否在应用启动时初始化向量存储（创建表结构等）
+        initialize-schema: true
+
+    # ========== RAG 文档来源配置 ==========
+    # 指定项目内置的测试文档路径，用于演示 RAG 检索
+    rag:
+      docs-path: classpath:/rag-docs/
+
+  # ---------- WebFlux 配置 ----------
+  # SSE（Server-Sent Events）流式接口的超时配置
+  webflux:
+    # 流式请求的超时时间（7000 分钟 = 约 4.9 天，相当于无超时）
+    # 因为 AI 的回答可能是长文本流式输出，需要足够的时间
+    session:
+      timeout: 7000m
+
+  # ---------- 开发工具配置 ----------
+  devtools:
+    restart:
+      # 开启热重启，修改代码后自动重启（开发环境实用）
+      enabled: true
+
+# ========== 日志配置 ==========
+logging:
+  level:
+    # 项目自身的日志级别
+    com.ailearn: DEBUG
+    # Spring AI 的日志级别（TRACE 可以看到完整的请求/响应）
+    org.springframework.ai: INFO
+    # Spring Web 的日志级别
+    org.springframework.web: DEBUG
+
+  # 日志格式（包含线程名、类名、行号）
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# ========== 自定义配置 ==========
+# 项目自定义的配置项，通过 @ConfigurationProperties 读取
+ai-learn:
+  # 学习模式开关
+  mode: learning  # learning（学习模式） / production（生产模式）
+
+  # 对话记忆的最大消息数
+  chat-memory:
+    max-messages: 20

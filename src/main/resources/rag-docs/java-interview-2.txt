@@ -1,0 +1,70 @@
+# Spring 框架核心知识点（示例 RAG 文档）
+
+## 1. Spring IoC 和 DI
+
+### IoC (Inversion of Control) 控制反转
+- 传统方式：对象自己创建依赖
+- IOC 方式：容器负责创建和管理对象，对象被动接收依赖
+
+### DI (Dependency Injection) 依赖注入
+- 构造器注入（推荐）：通过构造方法注入
+- Setter 注入：通过 setter 方法注入
+- 字段注入（@Autowired）：通过反射注入（不推荐，难以测试）
+
+### Bean 的作用域
+1. singleton：单例（默认），整个容器中只有一个实例
+2. prototype：原型，每次获取都创建新实例
+3. request：每个 HTTP 请求创建新实例
+4. session：每个 HTTP Session 创建新实例
+5. application：整个 ServletContext 生命周期
+
+### Bean 的生命周期
+实例化 → 属性填充 → Aware 接口调用 → BeanPostProcessor 前置处理
+→ InitializingBean.afterPropertiesSet() → 自定义 init-method
+→ BeanPostProcessor 后置处理 → 就绪
+→ 容器关闭 → DisposableBean.destroy() → 自定义 destroy-method
+
+## 2. Spring AOP 原理
+
+### AOP 核心概念
+- Aspect（切面）：横切关注点（如日志、事务）
+- JoinPoint（连接点）：可以增强的方法
+- Pointcut（切入点）：实际增强的方法
+- Advice（通知）：增强的逻辑
+- Proxy（代理）：代理对象
+
+### 代理模式
+1. JDK 动态代理：要求被代理类实现接口
+2. CGLIB 代理：通过继承目标类（无需接口）
+
+Spring Boot 2.x 默认使用 CGLIB 代理。
+
+### Advice 类型
+- @Before：前置通知
+- @After：后置通知（无论是否异常都执行）
+- @AfterReturning：返回通知
+- @AfterThrowing：异常通知
+- @Around：环绕通知（最强大）
+
+## 3. Spring 事务管理
+
+### 事务传播行为（Propagation）
+1. REQUIRED（默认）：有事务则加入，无则新建
+2. REQUIRES_NEW：总是新建事务，挂起当前
+3. NESTED：嵌套事务，底层用 savepoint
+4. SUPPORTS：有事务则加入，无则非事务执行
+5. NOT_SUPPORTED：以非事务执行，挂起当前事务
+6. NEVER：以非事务执行，有事务则抛异常
+7. MANDATORY：必须在事务中，无则抛异常
+
+### 事务失效的常见原因
+1. @Transactional 用在非 public 方法上
+2. 自调用（同一个类内方法调用不经过代理）
+3. 异常被 catch 后未重新抛出
+4. 数据库引擎不支持事务（如 MyISAM）
+5. @Transactional 的 rollbackFor 设置不正确
+
+### 解决自调用事务失效
+- 通过 AopContext.currentProxy() 获取代理对象
+- 将方法拆分到不同的 Service
+- 自己注入自己（@Autowired private XxxService self）

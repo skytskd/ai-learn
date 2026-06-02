@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ============================================================
+         ai-learn：AI 应用开发 Java 学习进阶项目
+         
+         技术栈：
+         - Spring Boot 3.4.5   — 基础框架
+         - Spring AI 1.0.0     — AI 集成框架（核心）
+         - LangChain4j 1.0.0   — AI 集成框架（对比学习）
+         - PostgreSQL / PgVector — 向量数据库（生产环境）
+         - H2 + SimpleVectorStore — 内存向量存储（学习环境）
+         
+         学习路线（按包结构浏览源码即可）：
+         1. service/BasicChatService       → 基础对话
+         2. service/StreamChatService      → 流式输出
+         3. service/MemoryChatService      → 对话记忆
+         4. service/RagService             → RAG 检索增强
+         5. service/AgentService           → Agent 工具调用
+         6. advisor/LoggingAdvisor          → 自定义 Advisor
+         7. tool/                           → 工具定义示例
+         ============================================================ -->
+
+    <!-- ========== Spring Boot 父 POM ========== -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.ailearn</groupId>
+    <artifactId>ai-learn</artifactId>
+    <version>1.0.0</version>
+    <name>ai-learn</name>
+    <description>AI 应用开发 Java 学习进阶项目——从入门到实战</description>
+
+    <!-- ========== 全局版本属性 ========== -->
+    <properties>
+        <java.version>17</java.version>
+        <spring-ai.version>1.0.0</spring-ai.version>
+    </properties>
+
+    <!-- ========== 依赖版本管理 ========== -->
+    <!-- BOM（Bill of Materials）：统一管理依赖版本，避免冲突 -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring AI BOM：统一管理所有 spring-ai-* 的版本 -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ========== 项目依赖 ========== -->
+    <dependencies>
+        <!-- === 第一部分：Spring Boot 基础 === -->
+
+        <!-- Spring Boot Web：提供 REST API 能力（内嵌 Tomcat） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Boot WebFlux：提供响应式编程 + SSE 流式接口 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Test：单元测试 & 集成测试 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- === 第二部分：Spring AI 核心 === -->
+
+        <!--
+            Spring AI OpenAI 集成
+            提供 ChatModel、EmbeddingModel、ChatClient 等核心接口
+            ⚠️ 需要申请 OpenAI API Key，在 application.yml 中配置
+        -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!--
+            Spring AI PGVector Store — 向量存储（生产环境用）
+            基于 PostgreSQL 的 pgvector 扩展实现向量检索
+            学习阶段可用 SimpleVectorStore（基于内存）替代
+        -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-pgvector-store-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!--
+            Spring AI PDF Reader — PDF 文档解析
+            RAG 系统中用于从 PDF 文件中提取文本
+        -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-pdf-document-reader</artifactId>
+        </dependency>
+
+        <!--
+            Spring AI Tika Document Reader — 通用文档解析
+            支持 Word、PPT、Excel、HTML 等多种格式
+        -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-tika-document-reader</artifactId>
+        </dependency>
+
+        <!-- === 第三部分：其他辅助依赖 === -->
+
+        <!-- Lombok：减少样板代码（@Data, @Slf4j 等） -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- H2 数据库：学习阶段用内存数据库模拟向量存储 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <!-- ========== 仓库配置 ========== -->
+    <!-- Spring AI 的 Milestone/Snapshot 版本需要从 Spring 仓库拉取 -->
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>spring-snapshots</id>
+            <name>Spring Snapshots</name>
+            <url>https://repo.spring.io/snapshot</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+    </repositories>
+
+    <!-- ========== 构建配置 ========== -->
+    <build>
+        <plugins>
+            <!--
+                Spring Boot Maven Plugin
+                功能：
+                1. 打包成可执行的 Fat JAR（java -jar 直接运行）
+                2. compilerArgs -parameters：保留方法参数名，Spring AI 的 @Tool 注解需要
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 应用开发 Java 学习进阶</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --sub: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --warn: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* === Header === */
+        .header {
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            padding: 60px 24px;
+            text-align: center;
+            color: white;
+        }
+        .header h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 12px; }
+        .header p { font-size: 1.1rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+
+        /* === Nav === */
+        .nav {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+        }
+        .nav a {
+            color: var(--sub);
+            text-decoration: none;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            padding: 6px 0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav a:hover, .nav a.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        /* === Container === */
+        .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+        /* === Section === */
+        .section { margin-bottom: 48px; }
+        .section h2 {
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section h3 { font-size: 1.2rem; color: var(--primary); margin: 20px 0 10px; }
+
+        /* === Cards === */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); transform: translateY(-2px); }
+        .card .num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .card h4 { font-size: 1.05rem; margin-bottom: 8px; }
+        .card p { color: var(--sub); font-size: 0.9rem; }
+        .card .endpoint {
+            display: inline-block;
+            background: #eff6ff;
+            color: var(--primary);
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+
+        /* === Code Block === */
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin: 12px 0;
+        }
+        code { font-family: 'SF Mono', 'Consolas', 'Fira Code', monospace; }
+
+        /* === API Table === */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--sub);
+            text-transform: uppercase;
+        }
+        td { font-size: 0.9rem; }
+
+        .method {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .method.get { background: #dcfce7; color: #16a34a; }
+        .method.post { background: #dbeafe; color: #2563eb; }
+        .method.delete { background: #fee2e2; color: #dc2626; }
+
+        /* === Tips === */
+        .tip {
+            background: #fffbeb;
+            border-left: 4px solid var(--warn);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .tip strong { color: #b45309; }
+
+        /* === Footer === */
+        .footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--sub);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <h1>🎓 AI 应用开发 · Java 学习进阶</h1>
+    <p>基于 Spring AI 框架，从基础对话到 Agent 工具调用，5 步掌握 AI 应用开发。</p>
+</div>
+
+<!-- Nav -->
+<nav class="nav">
+    <a href="#overview">总览</a>
+    <a href="#lesson1">第1课：基础对话</a>
+    <a href="#lesson2">第2课：流式输出</a>
+    <a href="#lesson3">第3课：对话记忆</a>
+    <a href="#lesson4">第4课：RAG 系统</a>
+    <a href="#lesson5">第5课：Agent</a>
+    <a href="#api">API 总览</a>
+</nav>
+
+<main class="container">
+
+    <!-- 总览 -->
+    <section class="section" id="overview">
+        <h2>📚 学习路径</h2>
+        <div class="card-grid">
+            <div class="card">
+                <div class="num">1</div>
+                <h4>基础对话</h4>
+                <p>学会向大模型发出请求并获取回复。理解 ChatClient、PromptTemplate、System Prompt。</p>
+                <span class="endpoint">POST /api/chat/simple</span>
+            </div>
+            <div class="card">
+                <div class="num">2</div>
+                <h4>流式输出</h4>
+                <p>实现像 ChatGPT 一样的打字机效果。掌握 Flux、SSE 协议、响应式编程。</p>
+                <span class="endpoint">GET /api/chat/stream</span>
+            </div>
+            <div class="card">
+                <div class="num">3</div>
+                <h4>对话记忆</h4>
+                <p>让 AI 记住之前的对话，实现多轮会话。理解 ChatMemory、MessageChatMemoryAdvisor。</p>
+                <span class="endpoint">POST /api/chat/memory</span>
+            </div>
+            <div class="card">
+                <div class="num">4</div>
+                <h4>RAG 系统</h4>
+                <p>基于私有知识库的智能问答。掌握 文档加载 → 分块 → Embedding → 向量检索 全流程。</p>
+                <span class="endpoint">POST /api/rag/ask</span>
+            </div>
+            <div class="card">
+                <div class="num">5</div>
+                <h4>AI Agent</h4>
+                <p>让 AI 自主调用工具完成任务。理解 ReAct 模式、@Tool 注解、Tool 注册机制。</p>
+                <span class="endpoint">POST /api/agent/chat</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 第1课 -->
+    <section class="section" id="lesson1">
+        <h2>1️⃣ 基础对话</h2>
+        <p>最入门的 AI 调用——发送一条消息，获取回复。</p>
+
+        <h3>核心代码</h3>
+<pre><code>// 最简单的调用
+String reply = chatClient.prompt()
+    .user("你好，请用中文回答")
+    .call()
+    .content();
+
+// 带 System Prompt（设定角色）
+String reply = chatClient.prompt()
+    .system("你是一名 Java 架构师，用中文回答")
+    .user(userQuestion)
+    .call()
+    .content();
+
+// 使用 PromptTemplate（变量注入）
+PromptTemplate template = new PromptTemplate("你是{role}，解答{difficulty}的{topic}问题：{q}");
+template.create(Map.of("role", "面试官", "difficulty", "高级", "topic", "并发", "q", question));</code></pre>
+
+        <div class="tip">
+            <strong>💡 学习要点：</strong>System Prompt 的角色设定影响 AI 回复质量；PromptTemplate 比字符串拼接更安全（防止提示词注入）。
+        </div>
+    </section>
+
+    <!-- 第2课 -->
+    <section class="section" id="lesson2">
+        <h2>2️⃣ 流式输出</h2>
+        <p>返回 Flux&lt;String&gt;，每个元素是一个 Token，实现打字机效果。</p>
+
+        <h3>核心代码</h3>
+<pre><code>// 服务层：返回 Token 流
+public Flux&lt;String&gt; streamChat(String message) {
+    return chatClient.prompt()
+        .system("你是一名友好的 AI 助手")
+        .user(message)
+        .stream()        // stream() 替代 call()
+        .content();      // 返回 Flux&lt;String&gt;
+}
+
+// 控制器层：包装成 SSE
+@GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+public Flux&lt;ServerSentEvent&lt;String&gt;&gt; streamChat(@RequestParam String message) {
+    return streamService.streamChat(message)
+        .map(chunk -> ServerSentEvent.&lt;String&gt;builder().data(chunk).build())
+        .concatWith(Flux.just(ServerSentEvent.&lt;String&gt;builder().data("[DONE]").build()));
+}</code></pre>
+
+        <div class="tip">
+            <strong>💡 面试要点：</strong>call() 返回完整 String，stream() 返回 Flux；SSE 比 WebSocket 更简单，适合单向推送场景。
+        </div>
+    </section>
+
+    <!-- 第3课 -->
+    <section class="section" id="lesson3">
+        <h2>3️⃣ 对话记忆</h2>
+        <p>通过 MessageChatMemoryAdvisor 自动注入历史消息，实现多轮对话。</p>
+
+        <h3>核心代码</h3>
+<pre><code>// 获取或创建会话记忆
+ChatMemory memory = sessionMemoryMap.computeIfAbsent(
+    conversationId, id -> new InMemoryChatMemory()
+);
+
+// 创建记忆 Advisor
+MessageChatMemoryAdvisor advisor = new MessageChatMemoryAdvisor(memory);
+
+// 带记忆的对话
+return chatClientBuilder.build()
+    .prompt()
+    .system("记住用户告诉你的信息")
+    .user(userMessage)
+    .advisors(advisor)  // 关键：注入 Advisor
+    .call()
+    .content();</code></pre>
+
+        <div class="tip">
+            <strong>💡 面试要点：</strong>历史越长 Token 消耗越大，常用窗口截断策略；生产环境用 Redis 替代 InMemoryChatMemory。
+        </div>
+    </section>
+
+    <!-- 第4课 -->
+    <section class="section" id="lesson4">
+        <h2>4️⃣ RAG 系统</h2>
+        <p>检索增强生成：先查向量库，再把结果和问题一起发给 LLM。</p>
+
+        <h3>完整流程</h3>
+<pre><code>// === 离线阶段：文档加载 ===
+@PostConstruct
+public void init() {
+    // 1. 加载文档
+    TextReader reader = new TextReader(resource);
+    List&lt;Document&gt; docs = reader.read();
+
+    // 2. 分块（每块 500 Token，重叠 50）
+    TokenTextSplitter splitter = new TokenTextSplitter(500, 50, 5, 10000, true);
+    List&lt;Document&gt; chunks = splitter.split(docs);
+
+    // 3. 存入向量数据库
+    vectorStore.add(chunks);
+}
+
+// === 在线阶段：RAG 问答 ===
+public String ask(String question, int topK) {
+    QuestionAnswerAdvisor advisor = new QuestionAnswerAdvisor(vectorStore,
+        SearchRequest.builder().topK(topK).similarityThreshold(0.7).build());
+
+    return chatClientBuilder.build()
+        .prompt()
+        .system("只根据参考资料回答，资料中没有就说不知道")
+        .user(question)
+        .advisors(advisor)   // 关键：RAG Advisor
+        .call()
+        .content();
+}</code></pre>
+
+        <div class="tip">
+            <strong>💡 面试要点：</strong>分块大小影响检索精度；Top-K 太大浪费 Token，太小丢失信息；混合检索（向量+关键词）效果更好。
+        </div>
+    </section>
+
+    <!-- 第5课 -->
+    <section class="section" id="lesson5">
+        <h2>5️⃣ AI Agent</h2>
+        <p>让 AI 自主决策并调用外部工具（天气查询、计算器、数据库查询）。</p>
+
+        <h3>工具定义</h3>
+<pre><code>@Component
+public class WeatherTool {
+    @Tool(description = "查询指定城市当前天气。仅支持中国主要城市。")
+    public String getWeather(
+        @ToolParam(description = "城市名称，如：北京、上海、杭州") String city) {
+        // 模拟数据，生产环境接真实 API
+        return switch (city) {
+            case "北京" -> "北京：晴，8°C ~ 22°C";
+            case "杭州" -> "杭州：晴转多云，18°C ~ 25°C";
+            default -> "暂无数据";
+        };
+    }
+}</code></pre>
+
+        <h3>Agent 对话</h3>
+<pre><code>public String chat(String userMessage) {
+    return chatClientBuilder.build()
+        .prompt()
+        .system("你可以使用工具：WeatherTool、CalculatorTool")
+        .user(userMessage)
+        .tools(ToolCallbacks.from(weatherTool, calculatorTool))  // 注册工具
+        .call()
+        .content();  // AI 会自动判断并调用工具
+}</code></pre>
+
+        <div class="tip">
+            <strong>💡 面试要点：</strong>Tool 的 description 是 AI 选择工具的判断依据，要写清楚"什么时候用"；ReAct 模式 = 思考→行动→观察 循环。
+        </div>
+    </section>
+
+    <!-- API 总览 -->
+    <section class="section" id="api">
+        <h2>📡 API 接口总览</h2>
+        <table>
+            <thead>
+                <tr><th>方法</th><th>接口路径</th><th>说明</th><th>文件</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="method post">POST</span></td>
+                    <td>/api/chat/simple</td><td>最简对话</td>
+                    <td>BasicChatController</td>
+                </tr>
+                <tr>
+                    <td><span class="method post">POST</span></td>
+                    <td>/api/chat/role</td><td>带角色设定</td>
+                    <td>BasicChatController</td>
+                </tr>
+                <tr>
+                    <td><span class="method post">POST</span></td>
+                    <td>/api/chat/exam</td><td>面试题生成（模板）</td>
+                    <td>BasicChatController</td>
+                </tr>
+                <tr>
+                    <td><span class="method get">GET</span></td>
+                    <td>/api/chat/stream</td><td>流式输出（SSE）</td>
+                    <td>StreamChatController</td>
+                </tr>
+                <tr>
+                    <td><span class="method post">POST</span></td>
+                    <td>/api/chat/memory</td><td>带记忆对话</td>
+                    <td>MemoryChatController</td>
+                </tr>
+                <tr>
+                    <td><span class="method delete">DELETE</span></td>
+                    <td>/api/chat/memory/{id}/clear</td><td>清除记忆</td>
+                    <td>MemoryChatController</td>
+                </tr>
+                <tr>
+                    <td><span class="method post">POST</span></td>
+                    <td>/api/rag/ask</td><td>RAG 知识库问答</td>
+                    <td>RagController</td>
+                </tr>
+                <tr>
+                    <td><span class="method post">POST</span></td>
+                    <td>/api/agent/chat</td><td>Agent 工具调用</td>
+                    <td>AgentController</td>
+                </tr>
+                <tr>
+                    <td><span class="method get">GET</span></td>
+                    <td>/api/agent/tools</td><td>查看可用工具</td>
+                    <td>AgentController</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>快速启动</h3>
+<pre><code># 1. 配置 API Key
+# 编辑 src/main/resources/application.yml
+# 将 your-api-key-here 替换为真实 Key
+
+# 2. 启动项目
+cd E:\code\ai-learn
+mvnw spring-boot:run
+
+# 3. 测试
+curl -X POST http://localhost:8080/api/chat/simple \
+  -H "Content-Type: application/json" \
+  -d '{"message":"什么是 Spring AI？"}'</code></pre>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <p>ai-learn · AI 应用开发 Java 学习进阶项目 · Spring Boot 3.4 + Spring AI 1.0</p>
+</footer>
+
+</body>
+</html>

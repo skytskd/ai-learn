@@ -1,0 +1,76 @@
+# Java 面试核心知识点（示例 RAG 文档）
+
+## 1. HashMap 的底层原理
+
+HashMap 是 Java 中最常用的数据结构之一。
+
+### 底层数据结构
+JDK 1.7：数组 + 链表
+JDK 1.8+：数组 + 链表/红黑树
+
+当链表长度 >= 8 且数组长度 >= 64 时，链表会转为红黑树（二叉搜索树）。
+当红黑树节点数 <= 6 时，退回链表。
+
+### 扩容机制
+默认初始容量：16
+默认负载因子：0.75
+扩容阈值 = capacity * loadFactor = 12
+
+扩容时：
+1. 创建新数组，大小为原来的 2 倍
+2. 重新计算每个元素的位置（rehash）
+3. JDK 1.8 优化：通过 hash & oldCap 判断元素在新数组的位置（不需要重新计算 hash）
+
+### 为何线程不安全
+- JDK 1.7：并发 resize 可能形成环形链表，导致 CPU 100%
+- JDK 1.8：并发 put 可能导致数据覆盖
+
+### 线程安全的替代方案
+1. ConcurrentHashMap：分段锁/CAS，推荐使用
+2. Collections.synchronizedMap()：全局锁，性能差
+3. Hashtable：已过时，不推荐
+
+## 2. ConcurrentHashMap 的原理
+
+### JDK 1.7：分段锁 (Segment)
+- 将内部数据分成多个 Segment（默认 16 个）
+- 每个 Segment 独立加锁
+- 并发级别：16（同一时刻最多 16 个线程并发写入）
+
+### JDK 1.8：CAS + synchronized
+- 去掉了 Segment 概念
+- 使用 CAS 进行无锁操作
+- 需要锁定桶时用 synchronized 锁住桶的头节点
+- 链表转红黑树优化查询
+- size() 方法使用 LongAdder 统计，不再需要遍历所有 Segment
+
+## 3. 线程池的核心参数
+
+ThreadPoolExecutor 的 7 个核心参数：
+
+1. corePoolSize：核心线程数
+2. maximumPoolSize：最大线程数
+3. keepAliveTime：空闲线程存活时间
+4. unit：时间单位
+5. workQueue：任务队列
+6. threadFactory：线程工厂
+7. rejectedExecutionHandler：拒绝策略
+
+### 线程池工作流程
+1. 线程数 < corePoolSize → 创建新线程
+2. 线程数 >= corePoolSize → 放入队列
+3. 队列满 + 线程数 < maximumPoolSize → 创建新线程
+4. 队列满 + 线程数 = maximumPoolSize → 执行拒绝策略
+
+### 四大拒绝策略
+1. AbortPolicy：抛异常（默认）
+2. CallerRunsPolicy：调用者线程执行
+3. DiscardPolicy：直接丢弃
+4. DiscardOldestPolicy：丢弃最老任务
+
+### 常见面试题
+Q: 为什么不用 Executors 创建线程池？
+A: Executors.newFixedThreadPool 和 newSingleThreadPool 使用
+   LinkedBlockingQueue（无界队列），可能导致 OOM。
+   Executors.newCachedThreadPool 允许创建无限线程，也会 OOM。
+   所以阿里规范要求用 ThreadPoolExecutor 手动创建。
