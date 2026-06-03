@@ -85,23 +85,34 @@
         <!-- === 第二部分：Spring AI 核心 === -->
 
         <!--
-            Spring AI OpenAI 集成
-            提供 ChatModel、EmbeddingModel、ChatClient 等核心接口
+            Spring AI OpenAI Starter
+            提供 ChatModel、EmbeddingModel、ChatClient 等核心接口的自动配置
             ⚠️ 需要申请 OpenAI API Key，在 application.yml 中配置
+            注意：1.0.0 中 artifactId 从 spring-ai-openai-spring-boot-starter 变为 spring-ai-starter-model-openai
         -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+            <artifactId>spring-ai-starter-model-openai</artifactId>
         </dependency>
 
         <!--
-            Spring AI PGVector Store — 向量存储（生产环境用）
-            基于 PostgreSQL 的 pgvector 扩展实现向量检索
-            学习阶段可用 SimpleVectorStore（基于内存）替代
+            Spring AI Vector Store — 向量存储核心
+            包含 SimpleVectorStore（基于内存），适用于学习环境
+            注意：1.0.0 中 SimpleVectorStore 无自动配置，需手动创建 Bean
         -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-pgvector-store-spring-boot-starter</artifactId>
+            <artifactId>spring-ai-vector-store</artifactId>
+        </dependency>
+
+        <!--
+            Spring AI RAG：检索增强生成（Modular RAG Architecture）
+            替代已弃用的 QuestionAnswerAdvisor，提供更灵活的 RAG 流程
+        -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-rag</artifactId>
+            <version>${spring-ai.version}</version>
         </dependency>
 
         <!--
@@ -123,13 +134,6 @@
         </dependency>
 
         <!-- === 第三部分：其他辅助依赖 === -->
-
-        <!-- Lombok：减少样板代码（@Data, @Slf4j 等） -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
 
         <!-- H2 数据库：学习阶段用内存数据库模拟向量存储 -->
         <dependency>
@@ -164,25 +168,29 @@
     <build>
         <plugins>
             <!--
-                Spring Boot Maven Plugin
-                功能：
-                1. 打包成可执行的 Fat JAR（java -jar 直接运行）
-                2. compilerArgs -parameters：保留方法参数名，Spring AI 的 @Tool 注解需要
+                Maven Compiler Plugin
+                保留 -parameters 参数，Spring AI 的 @Tool 注解需要方法参数名
             -->
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
                 <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <compilerArgs>
                         <arg>-parameters</arg>
                     </compilerArgs>
                 </configuration>
+            </plugin>
+
+            <!--
+                Spring Boot Maven Plugin
+                功能：打包成可执行的 Fat JAR（java -jar 直接运行）
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

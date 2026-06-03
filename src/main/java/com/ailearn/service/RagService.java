@@ -3,11 +3,11 @@ package com.ailearn.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
+import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
 import org.springframework.ai.reader.TextReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
-import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -63,7 +63,8 @@ import java.util.List;
  * </table>
  *
  * @see org.springframework.ai.vectorstore.VectorStore
- * @see org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor
+ * @see org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor
+ * @see org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever
  */
 @Service
 public class RagService {
@@ -164,58 +165,32 @@ public class RagService {
      *
      * <p>这个方法展示了 RAG 的完整在线流程。</p>
      *
-     * <p><b>关键：QuestionAnswerAdvisor</b></p>
-     * <p>这是一个预置的 Advisor，它会：</p>
+     * <p><b>关键：RetrievalAugmentationAdvisor + VectorStoreDocumentRetriever</b></p>
+     * <p>RetrievalAugmentationAdvisor 是 Spring AI 1.0.0 中 Modular RAG Architecture 的实现，它会：</p>
      * <ol>
      *   <li>把用户问题转为 Embedding</li>
-     *   <li>从 VectorStore 中检索最相关的文档块（Top-K）</li>
+     *   <li>通过 VectorStoreDocumentRetriever 从 VectorStore 中检索最相关的文档块（Top-K）</li>
      *   <li>把检索结果注入到 Prompt 的上下文窗口中</li>
      *   <li>最后让 LLM 基于这些资料回答问题</li>
      * </ol>
-     *
-     * <pre>{@code
-     * // QuestionAnswerAdvisor 内部做的事情等价于：
-     *
-     * // Step 1: 检索
-     * List<Document> relevantDocs = vectorStore.similaritySearch(
-     *     SearchRequest.query(question).withTopK(5)
-     * );
-     *
-     * // Step 2: 拼接文档内容
-     * String context = relevantDocs.stream()
-     *     .map(Document::getText)
-     *     .collect(Collectors.joining("\n\n"));
-     *
-     * // Step 3: 构造 Prompt
-     * String prompt = """
-     *     请根据以下资料回答问题。如果资料中没有相关信息，请明确说不知道。
-     *
-     *     参考资料：
-     *     %s
-     *
-     *     问题：%s
-     *     """.formatted(context, question);
-     *
-     * // Step 4: 发给 LLM
-     * chatClient.prompt().user(prompt).call().content();
-     * }</pre>
      *
      * @param question 用户的问题
      * @param topK     检索最相关的几条文档（建议 3-8）
      * @return AI 基于检索资料的回答
      */
     public String ask(String question, int topK) {
-        // 创建 QuestionAnswerAdvisor
-        // SearchRequest.defaults() 提供默认参数
-        //    withTopK(topK)：检索最相关的 topK 个文档块
-        //    withSimilarityThreshold(0.7)：只返回相似度 > 0.7 的结果（过滤噪音）
-        QuestionAnswerAdvisor ragAdvisor = new QuestionAnswerAdvisor(
-                vectorStore,
-                SearchRequest.builder()
-                        .topK(topK)
-                        .similarityThreshold(0.7)
-                        .build()
-        );
+        // 创建 VectorStoreDocumentRetriever
+        // 配置：相似度阈值 0.7，返回 topK 个文档
+        VectorStoreDocumentRetriever documentRetriever = VectorStoreDocumentRetriever.builder()
+                .vectorStore(vectorStore)
+                .similarityThreshold(0.7)
+                .topK(topK)
+                .build();
+
+        // 创建 RetrievalAugmentationAdvisor
+        RetrievalAugmentationAdvisor ragAdvisor = RetrievalAugmentationAdvisor.builder()
+                .documentRetriever(documentRetriever)
+                .build();
 
         return chatClientBuilder.build()
                 .prompt()

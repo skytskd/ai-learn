@@ -3,7 +3,7 @@ package com.ailearn.service;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.InMemoryChatMemory;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <ol>
  *   <li><b>ChatMemory（对话记忆）</b> —— 存储历史消息的仓库</li>
  *   <li><b>MessageChatMemoryAdvisor</b> —— 自动将历史消息注入到每次请求中</li>
- *   <li><b>InMemoryChatMemory</b> —— 基于内存的实现（学习环境用）</li>
+ *   <li><b>MessageWindowChatMemory</b> —— 基于内存的实现（学习环境用）</li>
  *   <li><b>Token 消耗</b> —— 历史消息越长，每次请求成本越高</li>
  * </ol>
  *
@@ -47,10 +47,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * </table>
  *
  * <p>本项目使用窗口截断策略（默认保留 20 条），通过
- * {@code MessageChatMemoryAdvisor(ChatMemory, windowSize)} 控制。</p>
+ * {@code MessageWindowChatMemory.builder().maxMessages(20).build()} 控制。</p>
  *
  * @see org.springframework.ai.chat.memory.ChatMemory
- * @see org.springframework.ai.chat.memory.InMemoryChatMemory
+ * @see org.springframework.ai.chat.memory.MessageWindowChatMemory
  * @see org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor
  */
 @Service
@@ -105,14 +105,16 @@ public class MemoryChatService {
         // 1. 获取或创建该会话的 ChatMemory
         ChatMemory memory = sessionMemoryMap.computeIfAbsent(
                 conversationId,
-                id -> new InMemoryChatMemory()
+                id -> MessageWindowChatMemory.builder()
+                        .maxMessages(MAX_HISTORY_SIZE)
+                        .build()
         );
 
         // 2. 创建 MessageChatMemoryAdvisor
-        //    参数：
-        //      memory     - 存储历史消息的仓库
-        //      windowSize - 最多保留的对话轮数（每轮 = user + assistant 两条消息）
-        MessageChatMemoryAdvisor memoryAdvisor = new MessageChatMemoryAdvisor(memory);
+        //    使用 builder 模式，绑定 conversationId
+        MessageChatMemoryAdvisor memoryAdvisor = MessageChatMemoryAdvisor.builder(memory)
+                .conversationId(conversationId)
+                .build();
 
         // 3. 发起对话
         //    注意：这里每次都用 chatClientBuilder.build() 创建新实例
@@ -135,7 +137,7 @@ public class MemoryChatService {
     public void clearMemory(String conversationId) {
         ChatMemory memory = sessionMemoryMap.remove(conversationId);
         if (memory != null) {
-            memory.clear();
+            memory.clear(conversationId);
         }
     }
 
@@ -150,7 +152,7 @@ public class MemoryChatService {
         if (memory == null) {
             return 0;
         }
-        // get(conversationId, MAX_HISTORY_SIZE) 获取最近 N 条消息
-        return memory.get(conversationId, Integer.MAX_VALUE).size();
+        // get(conversationId) 获取该会话的所有消息
+        return memory.get(conversationId).size();
     }
 }

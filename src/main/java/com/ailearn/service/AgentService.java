@@ -5,8 +5,7 @@ import com.ailearn.tool.WeatherTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.ai.tool.ToolCallbacks;
+import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.stereotype.Service;
 
 /**
@@ -163,7 +162,7 @@ public class AgentService {
 
         // 检查是否有工具调用
         if (response.getMetadata().get("toolCalls") != null) {
-            log.debug("🔧 工具调用详情：{}", response.getMetadata().get("toolCalls"));
+            log.debug("🔧 工具调用详情：{}", (Object) response.getMetadata().get("toolCalls"));
         }
 
         return response.getResult().getOutput().getText();
